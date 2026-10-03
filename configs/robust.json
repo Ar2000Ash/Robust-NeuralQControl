@@ -1,0 +1,31 @@
+{
+  "seed": 20260918,
+  "micro_gates": 4,
+  "grad_accum_steps": 4,
+  "random_scenarios": 8,
+  "boundary_scenarios": 2,
+  "cvar_alpha": 0.2,
+  "weights": {
+    "nominal": 1.0,
+    "mean": 1.0,
+    "cvar": 1.5
+  },
+  "robust_rf_abs_fraction": 0.05,
+  "max_steps": 1800,
+  "routine": {
+    "common_B0_abs_hz": 2.0,
+    "independent_v_abs_hz": 2.0,
+    "independent_J_abs_hz": 0.25,
+    "phase_bias_abs_deg": 1.0,
+    "clock_abs_ppm": 2.0,
+    "timing_jitter_rms_ps": 10.0
+  },
+  "ood_evaluation": {
+    "rf_abs_fractions": [
+      0.075,
+      0.1,
+      0.15
+    ],
+    "note": "These wider RF envelopes are evaluation-only and are not used for training."
+  }
+}
