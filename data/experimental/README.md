@@ -7,7 +7,7 @@ This directory contains the experimental spectra used for the pseudo-pure-state
 
 The same reconstruction inputs are available in two forms:
 
-- `digitized_spectra.zip`: the exact archived publication bundle;
+- `digitized_spectra.zip`: the canonical R/I-only reconstruction-input bundle used by the released tomography scripts;
 - `spectra/`: the same 242 real/imaginary CSV traces unpacked so they can be
   inspected directly on GitHub.
 
@@ -18,8 +18,7 @@ The reconstruction dataset contains 11 conditions × 11 readouts × 2
 quadratures = **242 CSV files**. No numerical transformation is applied when
 the archived traces are exposed under `spectra/`.
 
-The original laboratory working archive also contains 121
-`combined.csv` display/export traces. Those pre-combined files are not inputs
+The original laboratory working archive contains 363 digitized CSV exports in total: the 242 released R/I reconstruction inputs plus 121 `combined.csv` display/export traces. Those pre-combined files are not inputs
 to any tomography or uncertainty calculation and are therefore kept distinct
 from the canonical reconstruction dataset rather than being silently
 regenerated from rounded R/I exports.
