@@ -1,0 +1,28 @@
+{
+  "gate": "Hadamard",
+  "target_spin": 1,
+  "initial_deviation_operator": "Z1",
+  "ideal_output_operator": "X1",
+  "methods": ["Nominal NN", "Robust NN"],
+  "rf_error_percent_preparation_grid": [-10.0, -7.5, -5.0, -2.5, 0.0, 2.5, 5.0, 7.5, 10.0],
+  "rf_error_percent_acquired_for_paper": [-10.0, -5.0, 0.0, 5.0, 10.0],
+  "recommended_repeats_per_condition": 3,
+  "pulse": {
+    "n_slices": 300,
+    "dwell_s": 3.5e-05,
+    "dwell_us": 35.0,
+    "total_duration_ms": 10.5,
+    "numeric_rf_cap_hz": 50000.0
+  },
+  "physics": {
+    "v_hz": [-921.0, 40.75, 700.0],
+    "j_hz": [-64.0, 24.4, 34.1],
+    "interaction": "XX+YY+ZZ"
+  },
+  "device_export": {
+    "script": "scripts/05_export_spinq_waveforms.py",
+    "spinq_full_scale_hz": 8333.333333333334,
+    "spinq_full_scale_units": 100.0,
+    "note": "The RF perturbation is already baked into each exported device waveform."
+  }
+}
