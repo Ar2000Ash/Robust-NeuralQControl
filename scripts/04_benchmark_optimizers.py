@@ -254,7 +254,7 @@ SYS = None
 DEVICE = None
 SEED = None
 
-# optimizer parameters: Phase 4 v3
+# optimizer parameters used in the publication benchmark
 GRAPE_RESTARTS = 6
 GRAPE_STEPS = 2000
 GRAPE_LR = 8e-4
