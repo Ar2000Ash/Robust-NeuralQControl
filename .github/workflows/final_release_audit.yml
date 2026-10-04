@@ -1,0 +1,115 @@
+name: Final release audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/final_release_audit.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate source syntax and structured files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/*.py
+          bash -n hpc/benchmark_two_gpu.slurm
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          for path in sorted(Path("configs").glob("*.json")):
+              json.loads(path.read_text(encoding="utf-8"))
+
+          for path in sorted(Path("notebooks").glob("*.ipynb")):
+              json.loads(path.read_text(encoding="utf-8"))
+
+          print("JSON/notebook validation passed")
+          PY
+
+      - name: Check publication hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if grep -RniE \
+            '(/scratch/|/content/|C:\\Users\\|DataAnkara|alipaei|robust_training_\*\.zip|R1_|R2_|R3_|phase4_v3|phase5_hadamard)' \
+            --exclude='final_release_audit.yml' \
+            --exclude='MANIFEST_SHA256.csv' \
+            . ; then
+            echo "Found stale development, machine-specific, or private path marker" >&2
+            exit 1
+          fi
+
+          if grep -RniE \
+            '(#SBATCH[[:space:]]+--account|#SBATCH[[:space:]]+--partition|#SBATCH[[:space:]]+--qos|#SBATCH[[:space:]]+--mail-user)' \
+            hpc/benchmark_two_gpu.slurm ; then
+            echo "Found site/account-specific SLURM directive" >&2
+            exit 1
+          fi
+
+      - name: Generate repository SHA-256 manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv
+          import hashlib
+          import subprocess
+          from pathlib import Path
+
+          excluded = {
+              "MANIFEST_SHA256.csv",
+              ".github/workflows/final_release_audit.yml",
+          }
+
+          raw = subprocess.check_output(["git", "ls-files", "-z"])
+          paths = [
+              p.decode("utf-8")
+              for p in raw.split(b"\0")
+              if p and p.decode("utf-8") not in excluded
+          ]
+
+          def sha256(path: Path) -> str:
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+          with Path("MANIFEST_SHA256.csv").open(
+              "w", newline="", encoding="utf-8"
+          ) as handle:
+              writer = csv.writer(handle)
+              writer.writerow(["sha256", "path"])
+              for rel in sorted(paths):
+                  writer.writerow([sha256(Path(rel)), rel])
+
+          print(f"Manifest entries: {len(paths)}")
+          PY
+
+      - name: Verify release snapshot
+        run: python scripts/verify_release.py
+
+      - name: Commit manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MANIFEST_SHA256.csv
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Generate final release SHA-256 manifest"
+          git push
