@@ -87,7 +87,7 @@ def prepare_input_archive(input_zip, out):
     config_path = first_match(extraction, ["nominal_config.json", "config.json"])
     nominal_path = first_match(
         extraction,
-        ["nominal_frozen_checkpoint.pt", "frozen_best_checkpoint.pt",
+        ["nominal_best_state_dict.pt", "best_model_state_dict.pt",
          "best_full_checkpoint.pt", "best.pt"],
     )
     robust_path = first_match(
@@ -1189,8 +1189,8 @@ def main():
     nominal_path = first_match(
         extraction,
         [
-            "nominal_frozen_checkpoint.pt",
-            "frozen_best_checkpoint.pt",
+            "nominal_best_state_dict.pt",
+            "best_model_state_dict.pt",
             "best_full_checkpoint.pt",
             "best.pt",
         ],
