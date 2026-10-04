@@ -6,8 +6,8 @@ This document describes the canonical data and result assets in the release.
 
 | Path | Format | Description |
 |---|---|---|
-| `data/checkpoints/nominal_best_state_dict.pt` | PyTorch state dict | Selected nominal neural compiler weights from training step 48,600; architecture/physics settings are stored in `configs/nominal.json`. |
-| `data/checkpoints/robust_final_state_dict.pt` | PyTorch state dict | Selected risk-aware neural compiler trained under the ±5% RF envelope. |
+| <code>data/checkpoints/nominal_best_state_dict.pt</code> | PyTorch state dict | Selected nominal neural compiler weights from training step 48,600; architecture/physics settings are stored in <code>configs/nominal.json</code>. |
+| <code>data/checkpoints/robust_final_state_dict.pt</code> | PyTorch state dict | Selected risk-aware neural compiler trained under the ±5% RF envelope. |
 
 The public repository keeps one canonical state dictionary for each trained model. The released nominal tensor values are exactly equal to the original publication-export state dictionary even though the serialized file container is a compact reserialization.
 
@@ -15,33 +15,33 @@ The public repository keeps one canonical state dictionary for each trained mode
 
 | Path | Shape / format | Description |
 |---|---|---|
-| `data/nominal/validation_quaternions.npy` | ((512,4)), float32 | Frozen Haar-random SU(2) target quaternions. |
-| `data/nominal/validation_fidelities.npy` | ((512,)), float32 | Corresponding nominal unitary fidelities. |
-| `results/nominal/final_validation_summary.json` | JSON | Aggregate statistics for the 512-gate validation set. |
+| <code>data/nominal/validation_quaternions.npy</code> | \((512,4)\), float32 | Frozen Haar-random SU(2) target quaternions. |
+| <code>data/nominal/validation_fidelities.npy</code> | \((512,)\), float32 | Corresponding nominal unitary fidelities. |
+| <code>results/nominal/final_validation_summary.json</code> | JSON | Aggregate statistics for the 512-gate validation set. |
 
 ## SpinQ hardware waveforms
 
 Root:
 
-```text
+~~~text
 data/hardware/spinq/
-```
+~~~
 
-The canonical device set contains ten `.spinq` files:
+The canonical device set contains ten <code>.spinq</code> files:
 
-[
-2 {m models}
-	imes
-5 {m acquired RF conditions}
+$$
+2\ {\rm models}
+\times
+5\ {\rm acquired\ RF\ conditions}
 =
 10.
-]
+$$
 
 Conditions:
 
-[
--10,-5,0,+5,+10%.
-]
+$$
+-10,-5,0,+5,+10\%.
+$$
 
 Each file contains exactly 300 rows with:
 
@@ -55,27 +55,33 @@ Supporting files:
 
 | Path | Purpose |
 |---|---|
-| `device_pulse_manifest.csv` | source mapping plus amplitude/phase summary |
-| `hardware_run_sheet.csv` | acquired-condition order and simulated observables |
-| `paper_acquired_conditions.csv` | direct device-file ↔ tomography-condition mapping |
-| `amplitude_conversion_reference.csv` | Hz-to-device working-scale reference points |
-| `SHA256SUMS.txt` | checksums for the canonical device waveforms |
+| <code>device_pulse_manifest.csv</code> | source mapping plus amplitude/phase summary |
+| <code>hardware_run_sheet.csv</code> | acquired-condition order and simulated observables |
+| <code>paper_acquired_conditions.csv</code> | direct device-file ↔ tomography-condition mapping |
+| <code>amplitude_conversion_reference.csv</code> | Hz-to-device working-scale reference points |
+| <code>SHA256SUMS.txt</code> | checksums for the canonical device waveforms |
 
 ## Digitized experimental spectra
 
-Exact reconstruction archive:
+Canonical R/I reconstruction archive:
 
-```text
+~~~text
 data/experimental/digitized_spectra.zip
-```
+~~~
 
-Browsable copy:
+Original pre-combined display/export archive:
 
-```text
+~~~text
+data/experimental/combined_display_exports.zip
+~~~
+
+Browsable reconstruction inputs:
+
+~~~text
 data/experimental/spectra/
-```
+~~~
 
-Inventory:
+Inventory used by tomography:
 
 - 11 experimental conditions;
 - 11 readout rotations per condition;
@@ -86,42 +92,42 @@ Condition labels:
 
 | Label | Meaning |
 |---|---|
-| `PPS` | pseudo-pure-state reference |
-| `NM10`, `NM5`, `N0`, `NP5`, `NP10` | nominal pulse at −10%, −5%, 0%, +5%, +10% RF gain |
-| `RM10`, `RM5`, `R0`, `RP5`, `RP10` | risk-aware pulse at the same RF-gain settings |
+| <code>PPS</code> | pseudo-pure-state reference |
+| <code>NM10</code>, <code>NM5</code>, <code>N0</code>, <code>NP5</code>, <code>NP10</code> | nominal pulse at −10%, −5%, 0%, +5%, +10% RF gain |
+| <code>RM10</code>, <code>RM5</code>, <code>R0</code>, <code>RP5</code>, <code>RP10</code> | risk-aware pulse at the same RF-gain settings |
 
 Readout labels:
 
-```text
+~~~text
 III, XII, IXI, IIX, IXX, XXX, YII, IYI, IIY, YYI, YYY
-```
+~~~
 
-Each released readout has:
+Each released reconstruction readout has:
 
-- `,R.csv` — digitized real spectral trace;
-- `,I.csv` — digitized imaginary spectral trace.
+- <code>,R.csv</code> — digitized real spectral trace;
+- <code>,I.csv</code> — digitized imaginary spectral trace.
 
-The original laboratory working archive also contained 121 pre-combined display/export CSVs. They are not inputs to any released reconstruction or uncertainty calculation and are not treated as canonical numerical inputs.
+The separate archival ZIP contains the 121 original <code>combined.csv</code> display/export traces (11 conditions × 11 readouts). These denser pre-combined exports are not inputs to any released reconstruction or uncertainty calculation and are preserved exactly rather than regenerated from rounded R/I data.
 
 ## Stress-test results
 
 Root:
 
-```text
+~~~text
 results/stress_test/
-```
+~~~
 
 Files:
 
-- `stress_rf_gain.csv`
-- `stress_common_b0.csv`
-- `stress_spin1_offset.csv`
-- `stress_spin2_offset.csv`
-- `stress_spin3_offset.csv`
-- `stress_j_offset.csv`
-- `stress_phase_bias.csv`
-- `stress_clock_error.csv`
-- `stress_sweep_summary.csv`
+- <code>stress_rf_gain.csv</code>
+- <code>stress_common_b0.csv</code>
+- <code>stress_spin1_offset.csv</code>
+- <code>stress_spin2_offset.csv</code>
+- <code>stress_spin3_offset.csv</code>
+- <code>stress_j_offset.csv</code>
+- <code>stress_phase_bias.csv</code>
+- <code>stress_clock_error.csv</code>
+- <code>stress_sweep_summary.csv</code>
 
 Units follow the column names: Hz, degrees, ppm, fractional RF gain, or fidelity.
 
@@ -129,15 +135,15 @@ Units follow the column names: Hz, degrees, ppm, fractional RF gain, or fidelity
 
 Root:
 
-```text
+~~~text
 results/robust/
-```
+~~~
 
 | File | Description |
 |---|---|
-| `robust_training_history.csv` | validation history of the reported risk-aware fine-tuning run |
-| `robust_model_comparison.csv` | nominal vs risk-aware compiler across nominal/routine/OOD suites |
-| `rf_sweep_nominal_vs_robust.csv` | dense RF-gain comparison for plotting |
+| <code>robust_training_history.csv</code> | validation history of the reported risk-aware fine-tuning run |
+| <code>robust_model_comparison.csv</code> | nominal vs risk-aware compiler across nominal/routine/OOD suites |
+| <code>rf_sweep_nominal_vs_robust.csv</code> | dense RF-gain comparison for plotting |
 
 Only the ±5% RF envelope is used for training. Wider RF ranges in these files are evaluation-only.
 
@@ -145,18 +151,18 @@ Only the ±5% RF envelope is used for training. Wider RF ranges in these files a
 
 Root:
 
-```text
+~~~text
 results/benchmarks/
-```
+~~~
 
 | File | Description |
 |---|---|
-| `benchmark_method_summary.csv` | per-method aggregate fidelity/control/time statistics |
-| `benchmark_joint_robustness.csv` | routine and conservative joint uncertainty evaluation |
-| `benchmark_rf_sweep.csv` | mean/p05/min fidelity versus RF error |
-| `benchmark_b0_sweep.csv` | mean/p05/min fidelity versus common B0 offset |
-| `benchmark_optimizer_convergence.csv` | optimizer iteration histories |
-| `neural_latency_throughput.csv` | neural batch latency and throughput |
+| <code>benchmark_method_summary.csv</code> | per-method aggregate fidelity/control/time statistics |
+| <code>benchmark_joint_robustness.csv</code> | routine and conservative joint uncertainty evaluation |
+| <code>benchmark_rf_sweep.csv</code> | mean/p05/min fidelity versus RF error |
+| <code>benchmark_b0_sweep.csv</code> | mean/p05/min fidelity versus common B0 offset |
+| <code>benchmark_optimizer_convergence.csv</code> | optimizer iteration histories |
+| <code>neural_latency_throughput.csv</code> | neural batch latency and throughput |
 
 Compilation/optimization times are in seconds.
 
@@ -164,43 +170,43 @@ Compilation/optimization times are in seconds.
 
 Root:
 
-```text
+~~~text
 results/tomography/
-```
+~~~
 
 | File | Meaning |
 |---|---|
-| `experimental_hs_correlations.csv` | central nominal/robust Hadamard deviation-matrix correlations |
-| `pps_reference.csv` | PPS reference (C_{HS}) |
-| `tomography_uncertainty_mc.csv` | standalone stochastic reconstruction-MC summaries |
-| `hardware_difference_uncertainty_mc.csv` | standalone robust-minus-nominal MC differences |
-| `tomography_systematic_sensitivity.csv` | full systematic-sensitivity diagnostics |
-| `tomography_systematic_sensitivity_compact.csv` | compact sensitivity envelope |
-| `tomography_joint_effective_uncertainty.csv` | final manuscript-facing effective uncertainty |
+| <code>experimental_hs_correlations.csv</code> | central nominal/robust Hadamard deviation-matrix correlations |
+| <code>pps_reference.csv</code> | PPS reference \(C_{\mathrm{HS}}\) |
+| <code>tomography_uncertainty_mc.csv</code> | standalone stochastic reconstruction-MC summaries |
+| <code>hardware_difference_uncertainty_mc.csv</code> | standalone robust-minus-nominal MC differences |
+| <code>tomography_systematic_sensitivity.csv</code> | full systematic-sensitivity diagnostics |
+| <code>tomography_systematic_sensitivity_compact.csv</code> | compact sensitivity envelope |
+| <code>tomography_joint_effective_uncertainty.csv</code> | final manuscript-facing effective uncertainty |
 
 The tomography objects are **Hermitian traceless deviation matrices**, not unit-trace density matrices.
 
 The normalized Hilbert–Schmidt correlation is
 
-[
-C_{HS}(D_1,D_2)
+$$
+C_{\mathrm{HS}}(D_1,D_2)
 =
-rac{operatorname{Re}operatorname{Tr}(D_1D_2)}
-{sqrt{operatorname{Tr}(D_1^2)operatorname{Tr}(D_2^2)}}.
-]
+\frac{\operatorname{Re}\operatorname{Tr}(D_1D_2)}
+{\sqrt{\operatorname{Tr}(D_1^2)\operatorname{Tr}(D_2^2)}}.
+$$
 
 ## Configurations
 
 Root:
 
-```text
+~~~text
 configs/
-```
+~~~
 
-- `nominal.json`
-- `stress_test.json`
-- `robust_training.json`
-- `benchmark.json`
-- `hardware_experiment.json`
+- <code>nominal.json</code>
+- <code>stress_test.json</code>
+- <code>robust_training.json</code>
+- <code>benchmark.json</code>
+- <code>hardware_experiment.json</code>
 
 These are compact human-readable records of the frozen settings. The executable notebooks/scripts remain authoritative for control flow.
