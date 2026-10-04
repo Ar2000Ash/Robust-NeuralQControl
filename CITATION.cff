@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite the associated manuscript."
+title: "Risk-aware neural pulse compilation of continuous quantum gates with optimal-control benchmarking and NMR hardware validation"
+type: software
+version: "1.0.0"
+date-released: 2026-10-04
+authors:
+  - family-names: "Fath Lipaei"
+    given-names: "Arash"
+  - family-names: "Khaleghian"
+    given-names: "Ebrahim"
+  - family-names: "Göral"
+    given-names: "Gani"
+  - family-names: "Lin"
+    given-names: "Zidong"
+  - family-names: "Aslan"
+    given-names: "Selin"
+  - family-names: "Müstecaplıoğlu"
+    given-names: "Özgür E."
+repository-code: "https://github.com/Ar2000Ash/Robust-NeuralQControl"
+keywords:
+  - quantum control
+  - neural pulse compilation
+  - NMR
+  - optimal control
+  - GRAPE
+  - CVaR
+  - robust control
