@@ -1,0 +1,73 @@
+name: Expose digitized spectra
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/expose_digitized_spectra.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Unpack archived reconstruction spectra
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf data/experimental/spectra
+          work="$(mktemp -d)"
+          unzip -q data/experimental/digitized_spectra.zip -d "$work"
+
+          pps_dir="$(find "$work" -type d -name PPS -print -quit)"
+          if [ -z "$pps_dir" ]; then
+            echo "Could not locate PPS directory in digitized_spectra.zip" >&2
+            exit 1
+          fi
+
+          source_root="$(dirname "$pps_dir")"
+          mkdir -p data/experimental/spectra
+          cp -a "$source_root"/. data/experimental/spectra/
+
+          count="$(find data/experimental/spectra -type f -name '*.csv' | wc -l | tr -d ' ')"
+          if [ "$count" -ne 242 ]; then
+            echo "Expected 242 R/I CSV traces, found $count" >&2
+            exit 1
+          fi
+
+          if find data/experimental/spectra -type f -name '*combined.csv' | grep -q .; then
+            echo "Unexpected combined.csv files in reconstruction archive" >&2
+            exit 1
+          fi
+
+          printf 'condition,readout,quadrature,path\n' > data/experimental/spectra_manifest.csv
+          find data/experimental/spectra -type f -name '*.csv' -print0 |
+            sort -z |
+            while IFS= read -r -d '' file; do
+              rel="${file#data/experimental/spectra/}"
+              condition="${rel%%/*}"
+              name="${rel#*/}"
+              readout="${name%%,*}"
+              quad="${name#*,}"
+              quad="${quad%.csv}"
+              printf '%s,%s,%s,%s\n' "$condition" "$readout" "$quad" "$file"                 >> data/experimental/spectra_manifest.csv
+            done
+
+      - name: Commit browsable spectra
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/experimental/spectra data/experimental/spectra_manifest.csv
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Expose digitized NMR spectra as individual CSV files"
+          git push
