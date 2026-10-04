@@ -1,0 +1,116 @@
+name: Finalize Git release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/_temporary_finalize_git.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate source and shell syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/*.py
+          bash -n hpc/benchmark_two_gpu.slurm
+
+      - name: Audit public Markdown bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          bad = []
+          for path in sorted(Path(".").rglob("*.md")):
+              if ".git" in path.parts:
+                  continue
+              text = path.read_text(encoding="utf-8")
+              controls = sorted({
+                  ord(ch) for ch in text
+                  if ord(ch) < 32 and ord(ch) not in (9, 10, 13)
+              })
+              if controls:
+                  bad.append((str(path), f"control chars {controls}"))
+
+              for token in (
+                  "nominal_frozen_checkpoint.pt",
+                  "pisum",
+                  "\x0crac{",
+                  "ightarrow X_1",
+                  "operatorname{Re}operatorname",
+              ):
+                  if token in text:
+                      bad.append((str(path), f"stale/corrupt token {token!r}"))
+
+          if bad:
+              raise SystemExit("\n".join(f"{p}: {m}" for p, m in bad))
+          print("Markdown audit passed")
+          PY
+
+      - name: Regenerate SHA-256 manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv
+          import hashlib
+          import subprocess
+          from pathlib import Path
+
+          excluded = {
+              "MANIFEST_SHA256.csv",
+              ".github/workflows/_temporary_finalize_git.yml",
+          }
+
+          raw = subprocess.check_output(["git", "ls-files", "-z"])
+          paths = sorted(
+              p.decode("utf-8")
+              for p in raw.split(b"\0")
+              if p and p.decode("utf-8") not in excluded
+          )
+
+          def sha256(path: Path) -> str:
+              digest = hashlib.sha256()
+              with path.open("rb") as handle:
+                  for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              return digest.hexdigest()
+
+          with Path("MANIFEST_SHA256.csv").open(
+              "w", newline="", encoding="utf-8"
+          ) as handle:
+              writer = csv.writer(handle)
+              writer.writerow(["sha256", "path"])
+              for rel in paths:
+                  writer.writerow([sha256(Path(rel)), rel])
+
+          print(f"Manifest entries: {len(paths)}")
+          PY
+
+      - name: Verify complete release
+        run: python scripts/verify_release.py
+
+      - name: Commit final manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MANIFEST_SHA256.csv
+          if git diff --cached --quiet; then
+            echo "Manifest already current"
+            exit 0
+          fi
+          git commit -m "Regenerate manifest after Git cleanup"
+          git push
