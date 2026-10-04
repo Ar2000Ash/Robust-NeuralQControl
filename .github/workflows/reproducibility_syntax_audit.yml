@@ -1,0 +1,32 @@
+name: Reproducibility syntax audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/reproducibility_syntax_audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile benchmark driver
+        run: python -m py_compile scripts/04_benchmark_optimizers.py
+      - name: Check SLURM shell syntax
+        run: bash -n hpc/benchmark_two_gpu.slurm
+      - name: Check publication privacy markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RniE '(/scratch/|/home/[^ ]+|alipaei|#SBATCH[[:space:]]+--account|#SBATCH[[:space:]]+--partition|#SBATCH[[:space:]]+--qos|#SBATCH[[:space:]]+--mail-user)' hpc scripts/04_benchmark_optimizers.py; then
+            echo "Found private or site-specific HPC marker" >&2
+            exit 1
+          fi
+          if grep -RniE '(R1_|R2_|R3_|curriculum)' hpc scripts/04_benchmark_optimizers.py; then
+            echo "Found legacy staged-training marker" >&2
+            exit 1
+          fi
