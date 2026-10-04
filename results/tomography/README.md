@@ -46,3 +46,30 @@ final manuscript effective-uncertainty intervals. The systematic sensitivity
 analysis and the final combined effective uncertainty are handled separately
 by `scripts/08_tomography_systematic_sensitivity.py` and
 `scripts/09_tomography_joint_effective_uncertainty.py`.
+
+
+## Systematic-sensitivity diagnostics
+
+`tomography_systematic_sensitivity.csv` and
+`tomography_systematic_sensitivity_compact.csv` are the frozen outputs of
+`scripts/08_tomography_systematic_sensitivity.py`.
+
+This analysis keeps the standard reconstruction as the central result and
+measures sensitivity to alternative analysis choices:
+
+- linear and quadratic baseline subtraction in signal-free regions;
+- independent receiver-phase perturbations of ±1 degree;
+- a wider ±3 degree receiver-phase diagnostic;
+- moving one integration-window edge at a time by one digitized frequency bin
+  (approximately 2.5601565 Hz);
+- dropping either or both central Q3 transition windows while confirming the
+  reduced tomography matrix remains full rank (63).
+
+The routine sensitivity envelope uses the baseline, ±1 degree phase, and
+one-bin window-placement tests. The Q3-removal results are reported separately
+as leverage diagnostics. Neither set is interpreted as a statistical
+confidence interval.
+
+A local regression run against the exact digitized spectra reproduced the
+frozen systematic tables to floating-point roundoff (maximum discrepancy about
+1e-15).
