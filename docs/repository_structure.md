@@ -35,7 +35,7 @@ Robust-NeuralQControl/
 │   └── benchmark_two_gpu.slurm
 ├── data/
 │   ├── checkpoints/
-│   │   ├── nominal_frozen_checkpoint.pt
+│   │   ├── nominal_best_state_dict.pt
 │   │   └── robust_final_state_dict.pt
 │   ├── nominal/
 │   │   ├── validation_quaternions.npy
@@ -100,7 +100,7 @@ The benchmark, device conversion, and tomography stages are scripts because they
 
 ## Why the experimental spectra appear twice
 
-`data/experimental/digitized_spectra.zip` is the exact archived reconstruction bundle and is retained for byte-level provenance.
+`data/experimental/digitized_spectra.zip` is the canonical R/I reconstruction-input bundle. The original laboratory working archive additionally contained 121 pre-combined display/export CSVs that are not consumed by any released reconstruction or uncertainty script.
 
 `data/experimental/spectra/` exposes the same 242 real/imaginary CSV traces individually so reviewers can inspect them directly in GitHub without extracting the archive.
 
