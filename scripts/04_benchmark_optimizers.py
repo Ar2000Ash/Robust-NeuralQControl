@@ -5,15 +5,6 @@ It uses independent workers for target-gate sharding and writes reproducibility
 artifacts under results/benchmarks/.
 """
 
-#!/usr/bin/env python3
-"""
-Phase 4 v3 HPC benchmark for quantum pulse compilation.
-
-The benchmark can run on one GPU or as two independent workers that split the target gates.
-Pass the robust-training export ZIP as --input-zip. Rank 0 merges the per-gate records,
-runs the common robustness sweeps, and writes the final tables and figures.
-"""
-
 import argparse
 import copy
 import hashlib
@@ -162,9 +153,9 @@ class Config:
     rabi_max_hz: float = 50_000.0
     width: int = 256
     hidden_layers: int = 10
-    dropout: float = 0.10
+    dropout: float = 0.25
     batch_size: int = 32
-    train_steps: int = 5000
+    train_steps: int = 50_000
     lr: float = 5e-4
     weight_decay: float = 1e-3
     grad_clip: float = 1.0
@@ -175,7 +166,7 @@ class Config:
     validate_every: int = 100
     print_every: int = 20
     seed: int = 20260917
-    out_dir: str = "full_haar_nominal_run"
+    out_dir: str = "outputs/nominal"
 
 
 def load_cfg(path):
@@ -932,7 +923,7 @@ def postprocess_rank0(output_dir, input_zip, config_path, nominal_path, robust_p
 
     summary = summarize_methods(results, methods)
     summary.to_csv(tables / "benchmark_method_summary.csv", index=False)
-    pd.DataFrame(conv_rows).to_csv(tables / "optimizer_convergence_histories.csv", index=False)
+    pd.DataFrame(conv_rows).to_csv(tables / "benchmark_optimizer_convergence.csv", index=False)
 
     # RF and B0 sweeps
     RF_VALUES = np.linspace(-0.15, 0.15, 25, dtype=np.float32)
@@ -954,8 +945,8 @@ def postprocess_rank0(output_dir, input_zip, config_path, nominal_path, robust_p
         for j, x in enumerate(B0_VALUES):
             b0_rows.append({"method": method, "b0_offset_hz": float(x), "mean": float(Fb[:, j].mean()), "p05": float(np.quantile(Fb[:, j], 0.05)), "min": float(Fb[:, j].min())})
     RFDF, B0DF = pd.DataFrame(rf_rows), pd.DataFrame(b0_rows)
-    RFDF.to_csv(tables / "rf_sweep_all_methods.csv", index=False)
-    B0DF.to_csv(tables / "b0_sweep_all_methods.csv", index=False)
+    RFDF.to_csv(tables / "benchmark_rf_sweep.csv", index=False)
+    B0DF.to_csv(tables / "benchmark_b0_sweep.csv", index=False)
 
     # Joint robustness
     JOINT_SCENARIOS = 64
@@ -1005,3 +996,486 @@ def postprocess_rank0(output_dir, input_zip, config_path, nominal_path, robust_p
     for _, r in summary.iterrows():
         plt.scatter(r.mean_compile_time_s, r["mean"], s=70); plt.annotate(r.method, (r.mean_compile_time_s, r["mean"]), xytext=(5, 4), textcoords="offset points")
     plt.xscale("log"); plt.xlabel("Mean compilation time per gate (s)"); plt.ylabel("Mean nominal fidelity"); plt.grid(alpha=0.2); savefig(figs, "fidelity_vs_compile_time")
+
+    plt.figure(figsize=(10, 5.5))
+    for method in methods:
+        d = RFDF[RFDF.method == method]
+        plt.plot(d.rf_error_percent, d["mean"], label=method)
+    plt.xlabel("Global RF gain error (%)")
+    plt.ylabel("Mean fidelity")
+    plt.ylim(0, 1.005)
+    plt.legend()
+    plt.grid(alpha=0.2)
+    savefig(figs, "rf_robustness_all_methods")
+
+    plt.figure(figsize=(10, 5.5))
+    for method in methods:
+        d = B0DF[B0DF.method == method]
+        plt.plot(d.b0_offset_hz, d["mean"], label=method)
+    plt.xlabel("Common B0 / carrier offset (Hz)")
+    plt.ylabel("Mean fidelity")
+    plt.ylim(0, 1.005)
+    plt.legend()
+    plt.grid(alpha=0.2)
+    savefig(figs, "b0_robustness_all_methods")
+
+    P = JOINT.pivot(index="method", columns="suite", values="mean").loc[methods]
+    P.plot(kind="bar", figsize=(10, 5))
+    plt.ylabel("Mean gate × scenario fidelity")
+    plt.ylim(0, 1.005)
+    plt.xticks(rotation=25, ha="right")
+    plt.grid(axis="y", alpha=0.2)
+    savefig(figs, "joint_robustness_all_methods")
+
+    convdf = pd.DataFrame(conv_rows)
+    plt.figure(figsize=(9, 5))
+    for method in ["GRAPE", "Robust GRAPE", "NN-seeded GRAPE", "CRAB-SPSA"]:
+        d = convdf[(convdf.gate == "H") & (convdf.method == method)]
+        if len(d):
+            plt.plot(d.iteration, d.fidelity, label=method)
+    plt.xlabel("Optimization iteration")
+    plt.ylabel("Nominal fidelity")
+    plt.ylim(0, 1.005)
+    plt.legend()
+    plt.grid(alpha=0.2)
+    savefig(figs, "hadamard_optimizer_convergence")
+
+    # Preserve the exact model/config inputs with the benchmark output.
+    shutil.copy2(config_path, output_dir / "nominal_config.json")
+    shutil.copy2(nominal_path, output_dir / "nominal_checkpoint.pt")
+    shutil.copy2(robust_path, output_dir / "robust_checkpoint.pt")
+    np.save(raw_dir / "H0_full_XX_YY_ZZ.npy", SYS.H0.detach().cpu().numpy())
+
+    report = {
+        "version": "publication_optimizer_benchmark",
+        "input_bundle_sha256": sha256_file(input_zip),
+        "nominal_checkpoint_sha256": sha256_file(nominal_path),
+        "robust_checkpoint_sha256": sha256_file(robust_path),
+        "method_summary": summary.to_dict(orient="records"),
+        "joint_robustness": JOINT.to_dict(orient="records"),
+        "neural_timing": timing.to_dict(orient="records"),
+        "notes": {
+            "GRAPE": "Standalone 600-pixel I/Q GRAPE with six diversified nonzero starts, cosine decay, best-iterate retention, and L-BFGS refinement. Runtime includes all restarts and refinement.",
+            "Robust GRAPE": "Direct robust optimizer using routine uncertainty plus exact ±5% RF boundaries; selected on a shared held-out robust scenario ensemble.",
+            "NN-seeded GRAPE": "Neural pulse initialization followed by short target-specific GRAPE/L-BFGS refinement.",
+            "CRAB-SPSA": "16-mode chopped Fourier basis with stabilized SPSA.",
+            "parallelism": "Independent Python workers process disjoint target-gate subsets; each target is optimized on one GPU.",
+        },
+    }
+    json.dump(
+        report,
+        open(output_dir / "benchmark_report.json", "w"),
+        indent=2,
+        default=str,
+    )
+
+    env = {
+        "python": sys.version,
+        "platform": platform.platform(),
+        "torch": torch.__version__,
+        "numpy": np.__version__,
+        "cuda": torch.version.cuda,
+        "gpu": torch.cuda.get_device_name(DEVICE),
+    }
+    try:
+        env["nvidia_smi"] = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,memory.total,driver_version",
+                "--format=csv",
+            ],
+            text=True,
+        )
+    except Exception as exc:
+        env["nvidia_smi_error"] = str(exc)
+    json.dump(env, open(output_dir / "environment.json", "w"), indent=2)
+
+    with open(output_dir / "SUMMARY.txt", "w") as handle:
+        handle.write(
+            "NEURAL PULSE COMPILER — OPTIMAL-CONTROL BENCHMARK\n"
+            + "=" * 64
+            + "\n\n"
+        )
+        handle.write("METHOD SUMMARY\n" + summary.to_string(index=False) + "\n\n")
+        handle.write("JOINT ROBUSTNESS\n" + JOINT.to_string(index=False) + "\n\n")
+        handle.write("NEURAL TIMING\n" + timing.to_string(index=False) + "\n")
+
+    extraction = output_dir / "_input_archive"
+    if extraction.exists():
+        shutil.rmtree(extraction)
+
+    manifest = [
+        str(path.relative_to(output_dir))
+        for path in sorted(output_dir.rglob("*"))
+        if path.is_file()
+    ]
+    (output_dir / "MANIFEST.txt").write_text("\n".join(manifest))
+
+    checks = []
+    for path in sorted(output_dir.rglob("*")):
+        if path.is_file() and path.name != "SHA256SUMS.txt":
+            checks.append(
+                f"{sha256_file(path)}  {path.relative_to(output_dir)}"
+            )
+    (output_dir / "SHA256SUMS.txt").write_text("\n".join(checks))
+
+    archive_base = output_dir.parent / f"{output_dir.name}_results"
+    archive_path = shutil.make_archive(
+        str(archive_base),
+        "zip",
+        root_dir=output_dir.parent,
+        base_dir=output_dir.name,
+    )
+    print("=" * 72)
+    print("OPTIMAL-CONTROL BENCHMARK COMPLETE")
+    print("Output:", output_dir)
+    print("Result archive:", archive_path)
+    print(summary.to_string(index=False))
+    print("=" * 72, flush=True)
+    return archive_path
+
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+def main():
+    global CFG, SYS, DEVICE, SEED, ROBUST_SELECTION_SCENARIOS
+
+    args = parse_args()
+    rank = int(args.rank)
+    world = int(args.world_size)
+
+    if world < 1:
+        raise ValueError("--world-size must be >= 1")
+    if not (0 <= rank < world):
+        raise ValueError(
+            f"--rank must satisfy 0 <= rank < world_size; "
+            f"got rank={rank}, world={world}"
+        )
+
+    SEED = args.seed
+    random.seed(SEED + rank)
+    np.random.seed(SEED + rank)
+    torch.manual_seed(SEED + rank)
+    torch.backends.cuda.matmul.allow_tf32 = True
+
+    out = Path(args.output_dir).expanduser().resolve()
+    input_zip = resolve_input_zip(args.input_zip, Path.cwd())
+
+    if args.prepare_only:
+        extraction, config_path, nominal_path, robust_path = prepare_input_archive(
+            input_zip, out
+        )
+        print("PREPARE PASSED", flush=True)
+        print("Input bundle:", input_zip, flush=True)
+        print("Input SHA256:", sha256_file(input_zip), flush=True)
+        print("Extraction:", extraction, flush=True)
+        print("Config:", config_path, flush=True)
+        print("Nominal checkpoint:", nominal_path, flush=True)
+        print("Robust checkpoint:", robust_path, flush=True)
+        return
+
+    extraction = out / "_input_archive"
+    if not extraction.exists() or not any(extraction.iterdir()):
+        raise RuntimeError(
+            f"Prepared input bundle not found at {extraction}. "
+            "Run once with --prepare-only before launching workers."
+        )
+
+    config_path = first_match(extraction, ["nominal_config.json", "config.json"])
+    nominal_path = first_match(
+        extraction,
+        [
+            "nominal_frozen_checkpoint.pt",
+            "frozen_best_checkpoint.pt",
+            "best_full_checkpoint.pt",
+            "best.pt",
+        ],
+    )
+    robust_path = first_match(
+        extraction,
+        ["robust_final_model.pt", "robust_final_state_dict.pt"],
+    )
+    if config_path is None or nominal_path is None or robust_path is None:
+        raise FileNotFoundError(
+            "Need config + nominal + robust checkpoints. "
+            f"config={config_path}, nominal={nominal_path}, robust={robust_path}"
+        )
+
+    DEVICE = init_device(rank)
+    torch.cuda.manual_seed_all(SEED + rank)
+
+    CFG = load_cfg(config_path)
+    SYS = NMRSystem(CFG, DEVICE)
+
+    nominal_model = PulseCompiler(CFG).to(DEVICE)
+    robust_model = PulseCompiler(CFG).to(DEVICE)
+    nominal_model.load_state_dict(
+        extract_state(
+            torch.load(
+                nominal_path,
+                map_location=DEVICE,
+                weights_only=False,
+            )
+        ),
+        strict=True,
+    )
+    robust_model.load_state_dict(
+        extract_state(
+            torch.load(
+                robust_path,
+                map_location=DEVICE,
+                weights_only=False,
+            )
+        ),
+        strict=True,
+    )
+    for model in [nominal_model, robust_model]:
+        model.eval()
+        for parameter in model.parameters():
+            parameter.requires_grad_(False)
+
+    names, named, Q, targets = make_targets()
+    ROBUST_SELECTION_SCENARIOS = cat_scen(
+        sobol_scen(20, "routine", ROBUST_RF_ABS, SEED + 424242),
+        boundaries(ROBUST_RF_ABS),
+    )
+
+    with torch.inference_mode():
+        q = Q[0:1]
+        un = nominal_model(q)
+        ur = robust_model(q)
+        fn = float(
+            unitary_fidelity(
+                targets[0:1],
+                propagate_nominal(un),
+            ).item()
+        )
+        fr = float(
+            unitary_fidelity(
+                targets[0:1],
+                propagate_nominal(ur),
+            ).item()
+        )
+
+    if not (np.isfinite(fn) and np.isfinite(fr)):
+        raise RuntimeError("Non-finite self-check fidelity")
+
+    rprint(
+        rank,
+        f"SELF CHECK: nominal F(I)={fn:.6f}, robust F(I)={fr:.6f}; "
+        f"targets={len(names)}, world_size={world}",
+    )
+
+    if args.self_check_only:
+        print(
+            f"SELF CHECK PASSED on logical rank {rank}.",
+            flush=True,
+        )
+        return
+
+    if args.merge_only:
+        if rank != 0:
+            raise ValueError("--merge-only must be run with --rank 0")
+        gate_records = load_all_gate_records(out, len(names))
+        postprocess_rank0(
+            out,
+            input_zip,
+            config_path,
+            nominal_path,
+            robust_path,
+            nominal_model,
+            robust_model,
+            names,
+            named,
+            Q,
+            targets,
+            gate_records,
+        )
+        return
+
+    local_indices = list(range(rank, len(names), world))
+    rank_dir = out / "rank_results" / f"rank_{rank}"
+    rank_dir.mkdir(parents=True, exist_ok=True)
+
+    rprint(rank, "assigned target indices", local_indices)
+
+    for idx in local_indices:
+        record_path = rank_dir / f"gate_{idx:03d}.pt"
+        if record_path.exists():
+            try:
+                rec = torch.load(
+                    record_path,
+                    map_location="cpu",
+                    weights_only=False,
+                )
+                if int(rec.get("index", -1)) == idx:
+                    rprint(
+                        rank,
+                        f"SKIP existing completed gate {idx}: "
+                        f"{rec.get('name', names[idx])}",
+                    )
+                    continue
+            except Exception:
+                rprint(
+                    rank,
+                    f"existing record for gate {idx} is unreadable; recomputing",
+                )
+
+        name = names[idx]
+        target = targets[idx]
+        q = Q[idx:idx + 1]
+        rprint(rank, f"[{idx + 1}/{len(names)}] {name}")
+
+        with torch.inference_mode():
+            u_nom = nominal_model(q)[0]
+            u_rob = robust_model(q)[0]
+
+        f_nom = float(
+            unitary_fidelity(
+                target[None],
+                propagate_nominal(u_nom[None]),
+            ).item()
+        )
+        f_rob = float(
+            unitary_fidelity(
+                target[None],
+                propagate_nominal(u_rob[None]),
+            ).item()
+        )
+
+        rows = []
+        pulses = {
+            "Neural nominal": u_nom.detach(),
+            "Neural robust": u_rob.detach(),
+        }
+        histories = {}
+
+        for method, pulse, fidelity in [
+            ("Neural nominal", u_nom, f_nom),
+            ("Neural robust", u_rob, f_rob),
+        ]:
+            rows.append({
+                "gate": name,
+                "method": method,
+                "fidelity": fidelity,
+                "compile_time_s": np.nan,
+                "restart": np.nan,
+                "init_scale": np.nan,
+                "best_iteration": np.nan,
+                "optimization_score": np.nan,
+                "lbfgs_used": False,
+                **control_metrics(pulse),
+            })
+
+        rprint(rank, f"{name} — standalone GRAPE")
+        rec = grape_best(
+            target,
+            SEED + 10000 * idx,
+            robust=False,
+            rank=rank,
+        )
+        pulse = rec["pulse"]
+        pulses["GRAPE"] = pulse
+        histories["GRAPE"] = rec["history"]
+        rows.append({
+            "gate": name,
+            "method": "GRAPE",
+            "fidelity": rec["nominal_fidelity"],
+            "compile_time_s": rec["total_search_time_s"],
+            "restart": rec["restart"],
+            "init_scale": rec["init_scale"],
+            "best_iteration": rec["best_iteration"],
+            "optimization_score": rec["selection_score"],
+            "lbfgs_used": rec["lbfgs_used"],
+            **control_metrics(pulse),
+        })
+
+        rprint(rank, f"{name} — robust GRAPE")
+        rec = grape_best(
+            target,
+            SEED + 20000 * idx,
+            robust=True,
+            rank=rank,
+        )
+        pulse = rec["pulse"]
+        pulses["Robust GRAPE"] = pulse
+        histories["Robust GRAPE"] = rec["history"]
+        rows.append({
+            "gate": name,
+            "method": "Robust GRAPE",
+            "fidelity": rec["nominal_fidelity"],
+            "compile_time_s": rec["total_search_time_s"],
+            "restart": rec["restart"],
+            "init_scale": rec["init_scale"],
+            "best_iteration": rec["best_iteration"],
+            "optimization_score": rec["selection_score"],
+            "robust_selection_mean_fidelity": rec["robust_mean_fidelity"],
+            "robust_selection_cvar_infidelity": rec["cvar_infidelity"],
+            "lbfgs_used": rec["lbfgs_used"],
+            **control_metrics(pulse),
+        })
+
+        rprint(rank, f"{name} — NN-seeded GRAPE")
+        rec = nn_seeded_grape(
+            target,
+            u_nom.detach(),
+            rank=rank,
+        )
+        pulse = rec["pulse"]
+        pulses["NN-seeded GRAPE"] = pulse
+        histories["NN-seeded GRAPE"] = rec["history"]
+        rows.append({
+            "gate": name,
+            "method": "NN-seeded GRAPE",
+            "fidelity": rec["nominal_fidelity"],
+            "compile_time_s": rec["elapsed_s"],
+            "restart": np.nan,
+            "init_scale": np.nan,
+            "best_iteration": rec["best_iteration"],
+            "optimization_score": rec["selection_score"],
+            "lbfgs_used": rec["lbfgs_used"],
+            **control_metrics(pulse),
+        })
+
+        rprint(rank, f"{name} — CRAB-SPSA")
+        rec = crab_best(
+            target,
+            SEED + 30000 * idx,
+            rank=rank,
+        )
+        pulse = rec["pulse"]
+        pulses["CRAB-SPSA"] = pulse
+        histories["CRAB-SPSA"] = rec["history"]
+        rows.append({
+            "gate": name,
+            "method": "CRAB-SPSA",
+            "fidelity": rec["fidelity"],
+            "compile_time_s": rec["total_search_time_s"],
+            "restart": rec["restart"],
+            "init_scale": np.nan,
+            "best_iteration": rec["best_iteration"],
+            "optimization_score": rec["objective"],
+            "lbfgs_used": False,
+            **control_metrics(pulse),
+        })
+
+        save_gate_record(
+            rank_dir,
+            idx,
+            name,
+            rows,
+            pulses,
+            histories,
+        )
+        rprint(rank, f"saved gate {name}")
+
+    (rank_dir / "COMPLETE").write_text("ok\n")
+    rprint(
+        rank,
+        "WORKER COMPLETE — independent target shard finished.",
+    )
+
+
+if __name__ == "__main__":
+    main()
