@@ -1,0 +1,45 @@
+{
+  "seed": 20260918,
+  "sample_counts": {
+    "new_haar_gates": 256,
+    "sweep_gates": 128,
+    "map_gates": 64,
+    "joint_scenarios_per_profile": 96
+  },
+  "chunks": {
+    "gate_chunk": 8,
+    "scenario_chunk": 8
+  },
+  "sweeps": {
+    "common_B0_hz": {"min": -10.0, "max": 10.0, "points": 21},
+    "rf_gain_fraction": {"min": -0.15, "max": 0.15, "points": 25},
+    "phase_bias_deg": {"min": -3.0, "max": 3.0, "points": 25},
+    "J_magnitude_offset_hz": {"min": -1.0, "max": 1.0, "points": 21},
+    "clock_error_ppm": {"min": -5.0, "max": 5.0, "points": 21},
+    "spin1_offset_hz": {"min": -6.0, "max": 6.0, "points": 21},
+    "spin2_offset_hz": {"min": -6.0, "max": 6.0, "points": 21},
+    "spin3_offset_hz": {"min": -6.0, "max": 6.0, "points": 21}
+  },
+  "routine": {
+    "common_B0_abs_hz": 2.0,
+    "independent_v_abs_hz": 2.0,
+    "independent_J_abs_hz": 0.25,
+    "rf_gain_abs_fraction": 0.05,
+    "phase_bias_abs_deg": 1.0,
+    "clock_abs_ppm": 2.0,
+    "timing_jitter_rms_ps": 10.0
+  },
+  "conservative": {
+    "common_B0_abs_hz": 6.0,
+    "independent_v_abs_hz": 6.0,
+    "independent_J_abs_hz": 1.0,
+    "rf_gain_abs_fraction": 0.15,
+    "phase_bias_abs_deg": 3.0,
+    "clock_abs_ppm": 5.0,
+    "timing_jitter_rms_ps": 50.0
+  },
+  "b0_rf_map": {
+    "common_B0_hz": {"min": -6.0, "max": 6.0, "points": 13},
+    "rf_gain_fraction": {"min": -0.15, "max": 0.15, "points": 13}
+  }
+}
