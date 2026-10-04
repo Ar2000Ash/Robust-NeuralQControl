@@ -73,3 +73,49 @@ confidence interval.
 A local regression run against the exact digitized spectra reproduced the
 frozen systematic tables to floating-point roundoff (maximum discrepancy about
 1e-15).
+
+
+## Final joint/effective uncertainty
+
+`tomography_joint_effective_uncertainty.csv` is reproduced by
+
+```bash
+python scripts/09_tomography_joint_effective_uncertainty.py
+```
+
+using the same digitized spectra and central tomography model.
+
+This is the final manuscript-facing uncertainty layer. Each of 10,000
+realizations jointly propagates:
+
+- ±2% pointwise spectral-amplitude uncertainty;
+- a linear ±5 Hz frequency drift across the sequential readouts;
+- lower and upper integration-window perturbations within one digitized
+  frequency bin (±2.5601565 Hz), shared across readouts;
+- independent ±1 degree receiver-phase perturbations for the three spin groups;
+- uncertainty between no baseline correction and fitted linear/quadratic
+  baseline subtraction;
+- conservative trust weights for the two partially overlapped central Q3
+  transitions, handled through weighted least squares.
+
+The original experimental reconstruction remains the reported central
+`C_HS`. The joint distribution supplies the effective standard deviation and
+the 2.5--97.5 percentile interval.
+
+The archived Step-09 source did not include a tracked frozen output CSV.
+Therefore the table in this directory was regenerated from the archived
+analysis code and the exact released spectra. A direct manuscript regression
+check confirms that all 11 conditions reproduce the published effective SD and
+joint 95% interval exactly at the manuscript's five-decimal reporting
+precision.
+
+Representative final intervals are:
+
+- PPS: SD 0.01450, [0.82378, 0.88055];
+- nominal -10%: SD 0.02470, [0.32423, 0.41910];
+- robust 0%: SD 0.00795, [0.80872, 0.84023];
+- robust +10%: SD 0.01020, [0.76360, 0.80417].
+
+At the ±10% RF endpoints, the nominal and robust effective intervals remain
+clearly separated, preserving the principal hardware robustness conclusion
+under the joint reconstruction-uncertainty model.
