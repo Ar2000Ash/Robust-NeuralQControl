@@ -14,7 +14,7 @@ required by the local site.
 The launcher expects the repository root to contain:
 
 - `configs/nominal.json`;
-- `data/checkpoints/nominal_frozen_checkpoint.pt`;
+- `data/checkpoints/nominal_best_state_dict.pt`;
 - `data/checkpoints/robust_final_state_dict.pt`;
 - `scripts/04_benchmark_optimizers.py`.
 
