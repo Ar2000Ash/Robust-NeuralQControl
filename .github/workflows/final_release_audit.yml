@@ -42,18 +42,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          git grep -nI -E \
+          if git grep -nI -E \
             '(/scratch/|/content/|C:\\Users\\|DataAnkara|alipaei|robust_training_\*\.zip|R1_|R2_|R3_|phase4_v3|phase5_hadamard)' \
-            -- ':!.github/workflows/final_release_audit.yml' ':!MANIFEST_SHA256.csv' \
-            > AUDIT_MATCHES.txt || true
-
-          if [[ -s AUDIT_MATCHES.txt ]]; then
-            cat AUDIT_MATCHES.txt
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add AUDIT_MATCHES.txt
-            git commit -m "Record temporary release-audit matches"
-            git push
+            -- ':!.github/workflows/final_release_audit.yml' ':!MANIFEST_SHA256.csv' ; then
+            echo "Found stale development, machine-specific, or private path marker" >&2
             exit 1
           fi
 
