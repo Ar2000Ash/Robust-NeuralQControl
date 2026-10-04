@@ -14,6 +14,6 @@ implementation; the configs provide a compact, human-readable record.
 - `hardware_experiment.json`: Hadamard RF-sweep preparation and the recorded
   SpinQ device-export convention.
 
-No legacy staged/curriculum naming is used in the public robust-training
+No legacy staged-training labels are used in the public robust-training
 configuration because only the reported ±5% training run is part of the
 publication workflow.
