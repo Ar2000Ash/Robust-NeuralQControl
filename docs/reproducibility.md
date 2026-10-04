@@ -60,7 +60,7 @@ Main settings:
 Canonical frozen model:
 
 ```text
-data/checkpoints/nominal_frozen_checkpoint.pt
+data/checkpoints/nominal_best_state_dict.pt
 ```
 
 Canonical held-out validation data:
@@ -71,7 +71,7 @@ data/nominal/validation_fidelities.npy
 results/nominal/final_validation_summary.json
 ```
 
-The selected frozen nominal checkpoint corresponds to training step 48,600.
+The released nominal state dictionary contains the weights selected at training step 48,600. Its architecture and physical configuration are stored separately in `configs/nominal.json`.
 
 ## 4. Frozen nominal stress diagnosis
 
@@ -110,6 +110,8 @@ Per gate, training uses:
 - 1,800 maximum fine-tuning steps.
 
 The ±7.5%, ±10%, and ±15% RF ranges are evaluation-only tests.
+
+The manuscript records that broader follow-on training branches were specified but never entered. The public notebook intentionally omits unexecuted branch-control machinery and implements only the executed ±5% run that produced the reported model.
 
 Canonical frozen model:
 
