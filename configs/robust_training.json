@@ -1,5 +1,5 @@
 {
-  "source_checkpoint": "data/checkpoints/nominal_frozen_checkpoint.pt",
+  "source_checkpoint": "data/checkpoints/nominal_best_state_dict.pt",
   "seed": 20260918,
   "micro_gates": 4,
   "grad_accum_steps": 4,
@@ -11,7 +11,7 @@
     "type": "AdamW",
     "learning_rate": 0.00015,
     "weight_decay": 0.001,
-    "grad_clip": 1.0
+    "grad_clip": 1
   },
   "scheduler": {
     "type": "CosineAnnealingLR",
@@ -21,14 +21,14 @@
   "cvar": {
     "alpha": 0.2,
     "weights": {
-      "nominal": 1.0,
-      "mean_uncertain": 1.0,
+      "nominal": 1,
+      "mean_uncertain": 1,
       "cvar_tail": 1.5
     }
   },
   "regularization": {
     "smooth_lambda": 0.0001,
-    "power_lambda": 1e-06
+    "power_lambda": 0.000001
   },
   "validation": {
     "every_steps": 100,
@@ -37,22 +37,26 @@
     "boundary_scenarios": 2
   },
   "routine_uncertainty": {
-    "common_B0_abs_hz": 2.0,
-    "independent_v_abs_hz": 2.0,
+    "common_B0_abs_hz": 2,
+    "independent_v_abs_hz": 2,
     "independent_J_abs_hz": 0.25,
-    "phase_bias_abs_deg": 1.0,
-    "clock_abs_ppm": 2.0,
-    "timing_jitter_rms_ps": 10.0
+    "phase_bias_abs_deg": 1,
+    "clock_abs_ppm": 2,
+    "timing_jitter_rms_ps": 10
   },
   "conservative_evaluation": {
-    "common_B0_abs_hz": 6.0,
-    "independent_v_abs_hz": 6.0,
-    "independent_J_abs_hz": 1.0,
+    "common_B0_abs_hz": 6,
+    "independent_v_abs_hz": 6,
+    "independent_J_abs_hz": 1,
     "rf_gain_abs_fraction": 0.15,
-    "phase_bias_abs_deg": 3.0,
-    "clock_abs_ppm": 5.0,
-    "timing_jitter_rms_ps": 50.0
+    "phase_bias_abs_deg": 3,
+    "clock_abs_ppm": 5,
+    "timing_jitter_rms_ps": 50
   },
-  "evaluation_only_rf_abs_fractions": [0.075, 0.1, 0.15],
+  "evaluation_only_rf_abs_fractions": [
+    0.075,
+    0.1,
+    0.15
+  ],
   "note": "Training uses only the ±5% RF envelope. Wider RF ranges are evaluation-only."
 }
