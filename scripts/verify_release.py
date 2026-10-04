@@ -6,10 +6,16 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import subprocess
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "MANIFEST_SHA256.csv"
+
+COMBINED_EXPORT_SHA256 = (
+    "20e52816dcaf11c2e694b5841407bee19a992a70809cf03a3d57aa4418156bd4"
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -56,6 +62,31 @@ def verify_manifest() -> int:
                     f"actual:   {actual}"
                 )
             checked += 1
+
+    # When the checkout retains Git metadata, also prove that the manifest is
+    # complete rather than merely proving the hashes of the rows it lists.
+    if (ROOT / ".git").exists():
+        raw = subprocess.check_output(
+            ["git", "-C", str(ROOT), "ls-files", "-z"]
+        )
+        tracked = {
+            item.decode("utf-8")
+            for item in raw.split(b"\0")
+            if item
+            and item.decode("utf-8") != "MANIFEST_SHA256.csv"
+            and not item.decode("utf-8").startswith(
+                ".github/workflows/_temporary_"
+            )
+        }
+
+        if seen != tracked:
+            missing = sorted(tracked - seen)
+            stale = sorted(seen - tracked)
+            raise RuntimeError(
+                "Manifest/tree mismatch.\n"
+                f"Missing from manifest: {missing}\n"
+                f"Stale manifest paths: {stale}"
+            )
 
     return checked
 
@@ -115,6 +146,46 @@ def verify_spectra() -> None:
             "combined.csv files"
         )
 
+    archive = (
+        ROOT / "data" / "experimental" / "combined_display_exports.zip"
+    )
+    if not archive.is_file():
+        raise FileNotFoundError(
+            "Missing original combined-display export archive"
+        )
+
+    actual_sha = sha256_file(archive)
+    if actual_sha != COMBINED_EXPORT_SHA256:
+        raise RuntimeError(
+            "combined_display_exports.zip SHA-256 mismatch\n"
+            f"expected: {COMBINED_EXPORT_SHA256}\n"
+            f"actual:   {actual_sha}"
+        )
+
+    with zipfile.ZipFile(archive) as handle:
+        names = [
+            name
+            for name in handle.namelist()
+            if name.endswith(".csv")
+        ]
+        combined_names = [
+            name
+            for name in names
+            if name.endswith("combined.csv")
+        ]
+        r_names = [name for name in names if name.endswith(",R.csv")]
+        i_names = [name for name in names if name.endswith(",I.csv")]
+
+    if len(names) != 121 or len(combined_names) != 121:
+        raise RuntimeError(
+            "Expected 121 original combined.csv exports in "
+            f"combined_display_exports.zip; found {len(combined_names)}"
+        )
+    if r_names or i_names:
+        raise RuntimeError(
+            "combined_display_exports.zip unexpectedly contains R/I inputs"
+        )
+
 
 def verify_device_pulses() -> None:
     root = ROOT / "data" / "hardware" / "spinq" / "device_pulses"
@@ -146,6 +217,7 @@ def main() -> None:
     print("Configs: valid")
     print("Trained models: present")
     print("Digitized spectra: 242 CSV files (121 R + 121 I)")
+    print("Original combined display exports: 121 CSV files")
     print("Canonical SpinQ waveforms: 10 files × 300 rows")
 
 
