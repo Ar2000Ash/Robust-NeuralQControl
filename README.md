@@ -16,12 +16,12 @@ from an arbitrary single-qubit SU(2) target to a 10.5 ms pulse for a three-spin 
 
 ## What is released
 
-- **Trained models** — exact frozen nominal and risk-aware neural compiler checkpoints.
+- **Trained models** — frozen nominal and risk-aware neural compiler state dictionaries used by the released workflows.
 - **Training and evaluation code** — nominal training, frozen stress diagnosis, risk-aware fine-tuning, and optimizer benchmarking.
 - **Classical baselines** — GRAPE, robust GRAPE, NN-seeded GRAPE, and CRAB-SPSA.
 - **Hardware preparation** — Hadamard pulse generation plus the recorded Ankara/SpinQ device conversion.
 - **Exact device waveforms** — the ten `.spinq` files used for the reported nominal/robust RF-sweep conditions.
-- **Experimental data** — 242 individually browsable real/imaginary digitized spectra, plus the exact archived ZIP used by the reconstruction scripts.
+- **Experimental data** — 242 individually browsable real/imaginary digitized spectra, plus the canonical R/I reconstruction-input ZIP used by the analysis scripts.
 - **Tomography** — central deviation-matrix reconstruction, standalone Monte-Carlo uncertainty, systematic-sensitivity diagnostics, and final joint/effective uncertainty propagation.
 - **Frozen paper results** — compact CSV/JSON/NPY assets for replotting the principal numerical results without rerunning expensive optimization.
 
@@ -209,7 +209,7 @@ Each pulse contains 300 slices of 35 μs, giving a total duration of 10.5 ms. Th
 
 ## Reproducibility and provenance
 
-- The exact trained model binaries are tracked under `data/checkpoints/`.
+- The frozen trained-model state dictionaries are tracked under `data/checkpoints/`; the nominal weights are tensor-identical to the state dictionary exported from the selected nominal training checkpoint.
 - The ten canonical hardware `.spinq` files are byte-identical to the archived device-ready waveforms.
 - The experimental reconstruction ZIP is preserved as the exact historical Git blob used by the analysis.
 - The 242 reconstruction CSV traces are also exposed individually for inspection.
