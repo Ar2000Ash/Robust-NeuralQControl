@@ -121,16 +121,19 @@ def sync(device):
 # -----------------------------------------------------------------------------
 def resolve_input_zip(arg, cwd):
     if arg:
-        p = Path(arg).expanduser().resolve()
-        if not p.exists():
-            raise FileNotFoundError(p)
-        return p
-    candidates = sorted(cwd.glob("robust_training_*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not candidates:
-        candidates = sorted(cwd.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not candidates:
-        raise FileNotFoundError("No input ZIP found. Pass --input-zip or place the model ZIP in the working directory.")
-    return candidates[0].resolve()
+        path = Path(arg).expanduser().resolve()
+        if not path.exists():
+            raise FileNotFoundError(path)
+        return path
+
+    default_bundle = (cwd / "publication_model_bundle.zip").resolve()
+    if default_bundle.exists():
+        return default_bundle
+
+    raise FileNotFoundError(
+        "No benchmark model bundle found. Pass --input-zip explicitly or "
+        "create publication_model_bundle.zip from the public config/checkpoints."
+    )
 
 
 def first_match(root, patterns):
