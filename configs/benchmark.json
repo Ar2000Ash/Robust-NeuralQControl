@@ -1,0 +1,74 @@
+{
+  "seed": 20260919,
+  "targets": {
+    "named": ["I", "X", "Y", "Z", "H", "S", "T", "sqrtX", "sqrtY", "Rz_pi2", "generic_Rn"],
+    "haar_random": 8,
+    "total": 19
+  },
+  "grape": {
+    "restarts": 6,
+    "steps": 2000,
+    "learning_rate": 0.0008,
+    "initial_raw_scales": [0.003, 0.008, 0.015, 0.03, 0.06, 0.1],
+    "early_stop_fidelity": 0.9995,
+    "gradient_clip": 5.0,
+    "lbfgs": {
+      "enabled": true,
+      "max_iter": 200,
+      "learning_rate": 0.3
+    }
+  },
+  "robust_grape": {
+    "steps": 2200,
+    "learning_rate": 0.0006,
+    "random_training_scenarios": 8,
+    "boundary_scenarios": 2,
+    "rf_abs_fraction": 0.05,
+    "cvar_alpha": 0.2,
+    "weights": {
+      "nominal": 1.0,
+      "mean_uncertain": 1.0,
+      "cvar_tail": 1.5
+    },
+    "restarts": 6
+  },
+  "nn_seeded_grape": {
+    "adam_steps": 400,
+    "learning_rate": 0.0002,
+    "lbfgs": {
+      "enabled": true,
+      "max_iter": 120,
+      "learning_rate": 0.25
+    }
+  },
+  "crab_spsa": {
+    "modes": 16,
+    "restarts": 4,
+    "steps": 1500,
+    "a0": 0.05,
+    "c0": 0.03,
+    "initial_scale": 0.005,
+    "gradient_clip": 1.0
+  },
+  "routine_uncertainty": {
+    "common_B0_abs_hz": 2.0,
+    "independent_v_abs_hz": 2.0,
+    "independent_J_abs_hz": 0.25,
+    "rf_gain_abs_fraction": 0.05,
+    "phase_bias_abs_deg": 1.0,
+    "clock_abs_ppm": 2.0,
+    "timing_jitter_rms_ps": 10.0
+  },
+  "conservative_ood_uncertainty": {
+    "common_B0_abs_hz": 6.0,
+    "independent_v_abs_hz": 6.0,
+    "independent_J_abs_hz": 1.0,
+    "rf_gain_abs_fraction": 0.15,
+    "phase_bias_abs_deg": 3.0,
+    "clock_abs_ppm": 5.0,
+    "timing_jitter_rms_ps": 50.0
+  },
+  "joint_scenarios": 64,
+  "rf_sweep": {"min_fraction": -0.15, "max_fraction": 0.15, "points": 25},
+  "b0_sweep": {"min_hz": -10.0, "max_hz": 10.0, "points": 21}
+}
