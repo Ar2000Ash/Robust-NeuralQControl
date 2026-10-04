@@ -6,10 +6,10 @@ This document describes the canonical data and result assets in the release.
 
 | Path | Format | Description |
 |---|---|---|
-| `data/checkpoints/nominal_frozen_checkpoint.pt` | PyTorch checkpoint | Selected nominal neural compiler; includes model weights plus nominal run metadata/configuration. |
+| `data/checkpoints/nominal_best_state_dict.pt` | PyTorch state dict | Selected nominal neural compiler weights from training step 48,600; architecture/physics settings are stored in `configs/nominal.json`. |
 | `data/checkpoints/robust_final_state_dict.pt` | PyTorch state dict | Selected risk-aware neural compiler trained under the ±5% RF envelope. |
 
-The public repository keeps one canonical copy of each trained model.
+The public repository keeps one canonical state dictionary for each trained model. The released nominal tensor values are exactly equal to the original publication-export state dictionary even though the serialized file container is a compact reserialization.
 
 ## Nominal validation data
 
