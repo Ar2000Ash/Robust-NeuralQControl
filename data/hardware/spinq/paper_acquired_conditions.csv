@@ -1,0 +1,11 @@
+digitized_condition,method,rf_error_percent,device_file
+NM10,Nominal NN,-10.0,device_pulses/nominal_nn/hadamard_nominal_nn_rf_minus10p0pct.spinq
+NM5,Nominal NN,-5.0,device_pulses/nominal_nn/hadamard_nominal_nn_rf_minus05p0pct.spinq
+N0,Nominal NN,0.0,device_pulses/nominal_nn/hadamard_nominal_nn_rf_zero00p0pct.spinq
+NP5,Nominal NN,5.0,device_pulses/nominal_nn/hadamard_nominal_nn_rf_plus05p0pct.spinq
+NP10,Nominal NN,10.0,device_pulses/nominal_nn/hadamard_nominal_nn_rf_plus10p0pct.spinq
+RM10,Robust NN,-10.0,device_pulses/robust_nn/hadamard_robust_nn_rf_minus10p0pct.spinq
+RM5,Robust NN,-5.0,device_pulses/robust_nn/hadamard_robust_nn_rf_minus05p0pct.spinq
+R0,Robust NN,0.0,device_pulses/robust_nn/hadamard_robust_nn_rf_zero00p0pct.spinq
+RP5,Robust NN,5.0,device_pulses/robust_nn/hadamard_robust_nn_rf_plus05p0pct.spinq
+RP10,Robust NN,10.0,device_pulses/robust_nn/hadamard_robust_nn_rf_plus10p0pct.spinq
