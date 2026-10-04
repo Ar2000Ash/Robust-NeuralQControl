@@ -6,17 +6,18 @@ This guide separates **frozen-result reproduction** from **full recomputation**.
 
 From the repository root:
 
-```bash
+~~~bash
 python scripts/verify_release.py
-```
+~~~
 
 The verifier checks:
 
-- every SHA-256 entry in `MANIFEST_SHA256.csv`;
+- every SHA-256 entry in <code>MANIFEST_SHA256.csv</code>;
 - the presence of the nominal and risk-aware trained models;
 - JSON validity for all public experiment configs;
 - exactly 242 released tomography R/I CSV traces;
 - exactly 121 real and 121 imaginary spectra;
+- the exact 121-file combined-display export archive;
 - exactly ten canonical SpinQ device waveforms;
 - exactly 300 rows in each canonical device waveform.
 
@@ -24,10 +25,10 @@ The verifier checks:
 
 Portable dependency ranges are in:
 
-```text
+~~~text
 requirements.txt
 environment.yml
-```
+~~~
 
 The publication workflows use Python 3.13. GPU workloads require a CUDA-enabled PyTorch installation compatible with the target driver.
 
@@ -42,9 +43,9 @@ The released equations, Hamiltonian, target set, uncertainty definitions, and op
 
 Notebook:
 
-```text
+~~~text
 notebooks/01_train_nominal.ipynb
-```
+~~~
 
 Main settings:
 
@@ -53,41 +54,41 @@ Main settings:
 - 35 μs per slice;
 - 10-layer width-256 GELU MLP;
 - dropout 0.25;
-- AdamW, learning rate (5	imes10^{-4});
+- AdamW, learning rate \(5\times10^{-4}\);
 - 50,000 training steps;
 - seed 20260917.
 
 Canonical frozen model:
 
-```text
+~~~text
 data/checkpoints/nominal_best_state_dict.pt
-```
+~~~
 
 Canonical held-out validation data:
 
-```text
+~~~text
 data/nominal/validation_quaternions.npy
 data/nominal/validation_fidelities.npy
 results/nominal/final_validation_summary.json
-```
+~~~
 
-The released nominal state dictionary contains the weights selected at training step 48,600. Its architecture and physical configuration are stored separately in `configs/nominal.json`.
+The released nominal state dictionary contains the weights selected at training step 48,600. Its architecture and physical configuration are stored separately in <code>configs/nominal.json</code>.
 
 ## 4. Frozen nominal stress diagnosis
 
 Notebook:
 
-```text
+~~~text
 notebooks/02_stress_test_nominal.ipynb
-```
+~~~
 
 The notebook loads the frozen nominal model and evaluates RF gain, common B0, independent spin offsets, J-coupling offsets, phase bias, clock error, and joint uncertainty profiles.
 
 Frozen publication tables:
 
-```text
+~~~text
 results/stress_test/
-```
+~~~
 
 The routine profile includes ±5% RF-gain uncertainty; the conservative profile extends to ±15%.
 
@@ -95,9 +96,9 @@ The routine profile includes ±5% RF-gain uncertainty; the conservative profile 
 
 Notebook:
 
-```text
+~~~text
 notebooks/03_train_robust.ipynb
-```
+~~~
 
 The public experiment is one direct risk-aware fine-tuning run under a fixed **±5% RF-gain training envelope**.
 
@@ -105,35 +106,35 @@ Per gate, training uses:
 
 - 8 random joint uncertainty scenarios;
 - 2 exact RF-boundary scenarios;
-- CVaR (alpha=0.20);
+- CVaR \(\alpha=0.20\);
 - CVaR weight 1.5;
 - 1,800 maximum fine-tuning steps.
 
 The ±7.5%, ±10%, and ±15% RF ranges are evaluation-only tests.
 
-The manuscript records that broader follow-on training branches were specified but never entered. The public notebook intentionally omits unexecuted branch-control machinery and implements only the executed ±5% run that produced the reported model.
+The public notebook intentionally implements only the executed ±5% run that produced the reported model.
 
 Canonical frozen model:
 
-```text
+~~~text
 data/checkpoints/robust_final_state_dict.pt
-```
+~~~
 
 The selected robust checkpoint corresponds to validation step 1,500.
 
 Frozen outputs:
 
-```text
+~~~text
 results/robust/
-```
+~~~
 
 ## 6. Optimal-control benchmark
 
 Driver:
 
-```text
+~~~text
 scripts/04_benchmark_optimizers.py
-```
+~~~
 
 Methods:
 
@@ -152,9 +153,9 @@ Target set:
 
 The recommended publication run uses the portable two-GPU launcher:
 
-```bash
+~~~bash
 sbatch hpc/benchmark_two_gpu.slurm
-```
+~~~
 
 The launcher contains no site-specific account information. If a cluster requires account/partition/QoS flags, supply them at submission time.
 
@@ -162,35 +163,35 @@ Each GPU runs an independent Python worker on a disjoint target subset. There is
 
 Frozen benchmark tables:
 
-```text
+~~~text
 results/benchmarks/
-```
+~~~
 
 ## 7. Hadamard hardware preparation
 
 Notebook:
 
-```text
+~~~text
 notebooks/05_prepare_hardware.ipynb
-```
+~~~
 
 The representative experiment applies a Hadamard gate to spin 1 with ideal deviation transfer
 
-[
-Z_1 ightarrow X_1.
-]
+$$
+Z_1 \rightarrow X_1.
+$$
 
 The notebook produces Hz-equivalent I/Q controls on the nine-point preparation grid
 
-[
--10,-7.5,-5,-2.5,0,+2.5,+5,+7.5,+10%.
-]
+$$
+-10,-7.5,-5,-2.5,0,+2.5,+5,+7.5,+10\%.
+$$
 
 The reported hardware acquisition uses the five points
 
-[
--10,-5,0,+5,+10%
-]
+$$
+-10,-5,0,+5,+10\%
+$$
 
 for each of the two neural models.
 
@@ -198,29 +199,29 @@ for each of the two neural models.
 
 Exporter:
 
-```bash
+~~~bash
 python scripts/05_export_spinq_waveforms.py
-```
+~~~
 
 Recorded device convention:
 
-[
-A_{m SpinQ}
+$$
+A_{\rm SpinQ}
 =
-100,
-rac{sqrt{u_x^2+u_y^2}}
-{8333.333333333334 {m Hz}},
-]
+100\,
+\frac{\sqrt{u_x^2+u_y^2}}
+{8333.333333333334\ {\rm Hz}},
+$$
 
-[
-phi_{m SpinQ}
+$$
+\phi_{\rm SpinQ}
 =
-operatorname{atan2}(u_y,u_x)
-rac{180}{pi}
-pmod{360^circ}.
-]
+\operatorname{atan2}(u_y,u_x)
+\frac{180}{\pi}
+\pmod{360^\circ}.
+$$
 
-Each `.spinq` file contains 300 rows with:
+Each <code>.spinq</code> file contains 300 rows with:
 
 1. device amplitude;
 2. phase in degrees;
@@ -228,43 +229,51 @@ Each `.spinq` file contains 300 rows with:
 
 Canonical acquired-condition waveforms:
 
-```text
+~~~text
 data/hardware/spinq/device_pulses/
-```
+~~~
 
 The requested RF perturbation is already baked into each waveform and must not be applied again inadvertently at the instrument.
 
 ## 9. Experimental spectra and central tomography
 
-Exact archive:
+Canonical reconstruction archive:
 
-```text
+~~~text
 data/experimental/digitized_spectra.zip
-```
+~~~
+
+Original pre-combined laboratory display exports:
+
+~~~text
+data/experimental/combined_display_exports.zip
+~~~
 
 Browsable reconstruction inputs:
 
-```text
+~~~text
 data/experimental/spectra/
-```
+~~~
 
-The released reconstruction data contain:
+The reconstruction dataset contains
 
-[
-11 {m conditions}
-	imes
-11 {m readouts}
-	imes
-2 {m quadratures}
+$$
+11\ {\rm conditions}
+\times
+11\ {\rm readouts}
+\times
+2\ {\rm quadratures}
 =
-242 {m CSV traces}.
-]
+242\ {\rm CSV\ traces}.
+$$
+
+The separate combined-display archive contains 121 original <code>combined.csv</code> exports. They are retained for archival completeness but are not consumed by the tomography or uncertainty scripts.
 
 Central reconstruction:
 
-```bash
+~~~bash
 python scripts/06_reconstruct_tomography.py
-```
+~~~
 
 No manual extraction is necessary.
 
@@ -278,20 +287,20 @@ The linear inversion uses:
 
 Outputs:
 
-```text
+~~~text
 results/tomography/experimental_hs_correlations.csv
 results/tomography/pps_reference.csv
-```
+~~~
 
 ## 10. Tomography uncertainty
 
 Run in order:
 
-```bash
+~~~bash
 python scripts/07_tomography_uncertainty_mc.py
 python scripts/08_tomography_systematic_sensitivity.py
 python scripts/09_tomography_joint_effective_uncertainty.py
-```
+~~~
 
 ### Step 07 — standalone reconstruction MC
 
@@ -331,13 +340,13 @@ It uses 10,000 realizations with base seed 24680 and reproduces the manuscript-f
 
 ## 11. Generated versus frozen artifacts
 
-Frozen publication assets are committed under `data/` and `results/`.
+Frozen publication assets are committed under <code>data/</code> and <code>results/</code>.
 
 Fresh executions should write to:
 
-```text
+~~~text
 outputs/
-```
+~~~
 
 which is ignored by Git.
 
