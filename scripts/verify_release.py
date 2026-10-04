@@ -83,7 +83,7 @@ def verify_configs() -> None:
 
 def verify_models() -> None:
     required = [
-        ROOT / "data" / "checkpoints" / "nominal_frozen_checkpoint.pt",
+        ROOT / "data" / "checkpoints" / "nominal_best_state_dict.pt",
         ROOT / "data" / "checkpoints" / "robust_final_state_dict.pt",
     ]
     for path in required:
