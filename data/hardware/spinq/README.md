@@ -46,7 +46,6 @@ The requested RF scaling is **already baked into each waveform**. It must not be
 - `hardware_run_sheet.csv`: the ten hardware conditions corresponding to the reported experiment.
 - `paper_acquired_conditions.csv`: device-file to digitized-spectrum mapping.
 - `amplitude_conversion_reference.csv`: reference points for the Hz-to-device-amplitude scale.
-- `reference/REFERENCE_10.spinq`: archived example of the SpinQ pulse-file format.
 - `SHA256SUMS.txt`: checksums for this curated device package.
 
 The large nested source copy from the historical archive is intentionally not duplicated. Its scientific inputs are represented elsewhere in the repository by the cleaned preparation notebook, frozen checkpoints, and reproducibility data.
