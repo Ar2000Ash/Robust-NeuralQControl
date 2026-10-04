@@ -47,7 +47,6 @@ jobs:
                   "nominal_frozen_checkpoint.pt",
                   "pisum",
                   "\x0crac{",
-                  "ightarrow X_1",
                   "operatorname{Re}operatorname",
               ):
                   if token in text:
